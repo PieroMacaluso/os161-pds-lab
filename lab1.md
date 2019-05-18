@@ -203,7 +203,7 @@ void hello(void);
 #endif
 ```
 
-   -La chiamata a `hello()` nel main può esser resa opzionale come segue
+   - La chiamata a `hello()` nel main può esser resa opzionale come segue
 ```
 #if OPT_HELLO
    hello();
@@ -228,7 +228,7 @@ Realizzare questo esercizio con configurazione: THREADS, anziche’ DUMBVM o HEL
 
 ### Built-in thread tests
 
-Quando si avvia os161, tra le opzioni disponibili dal menu, si possono avviare i test per thread. Si tratta di funzioni NON caricate come eseguibili separati, ma direttamente likati nel kernel (in pratica, quindi, di parti del kernel).
+Quando si avvia os161, tra le opzioni disponibili dal menu, si possono avviare i test per thread. Si tratta di funzioni NON caricate come eseguibili separati, ma direttamente linkati nel kernel (in pratica, quindi, di parti del kernel).
 I programmi di test dei thread usano sincronizzazione basata su semafori. Si può tentare di tracciarne l’esecuzione in GDB, per verificare come lavora lo scheduler, cone sono creati i thread, e cosa succede al context-switch. Per far questo, si consiglia di tracciare funzioni quali `thread_create` `thread_fork`, `thread_yield`, …
 
 Il test `tt1` stampa i numeri da 0 a 7 ad ogni loop del thread, `tt2` stampa solo ad inizio e fine dei thread (serve a dimostrare che lo scheduler non genera starvation). I threads sono avviati e girano per un po’ di iterazioni. Il test `tt3` utilizza semafori, che nella versione base di OS161 non funzionano correttamente: il problema sarà affrontato in un futuro laboratorio.
