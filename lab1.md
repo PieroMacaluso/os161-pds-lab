@@ -137,7 +137,7 @@ mips-harvard-os161-gdb –i=mi kernel
 
 ## Modificare il kernel
 
-> (I sorgenti del kernel sono nella cartella os161/os161-base-2.0.2/kern e relative sotto-cartelle: si omette in questa parte il prefisso e si indicano i direttori a partire da “kern”.
+> (I sorgenti del kernel sono nella cartella `os161/os161-base-2.0.2/kern` e relative sotto-cartelle: si omette in questa parte il prefisso e si indicano i direttori a partire da “kern”.
 
 Una nuova versione del kernel implica modifica e/o aggiunta di file sorgenti. Si veda la descrizione [Bulding OS/161](http://www.student.cs.uwaterloo.ca/~cs350/common/WorkingWith161.html) (sezioni: “Configure a kernel” e “Compile a kernel”).
 
