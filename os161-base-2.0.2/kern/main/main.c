@@ -101,7 +101,9 @@ boot(void)
 	kprintf("OS/161 base system version %s\n", BASE_VERSION);
 	kprintf("%s", harvard_copyright);
 	kprintf("\n");
-	hello();
+	#if OPT_HELLO
+   	hello();
+	#endif
 	kprintf("Put-your-group-name-here's system version %s (%s #%d)\n",
 		GROUP_VERSION, buildconfig, buildversion);
 	kprintf("\n");
