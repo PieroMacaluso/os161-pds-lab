@@ -59,6 +59,7 @@
 #include <addrspace.h>
 #include <vnode.h>
 #include <elf.h>
+#include "opt-userp.h"
 
 /*
  * Load a segment at virtual address VADDR. The segment in memory
@@ -302,6 +303,12 @@ load_elf(struct vnode *v, vaddr_t *entrypoint)
 	}
 
 	*entrypoint = eh.e_entry;
+	#if OPT_USERP
+	kprintf("First segment: VADDR = %d, PADDR = %d, NPAGES = %d\n", as->as_vbase1, as->as_pbase1, as->as_npages1);
+	kprintf("Second segment: VADDR = %d, PADDR = %d, NPAGES = %d\n", as->as_vbase2, as->as_pbase2, as->as_npages2);
+	kprintf("Stack segment: PADDR = %d\n", as->as_stackpbase);
+	#endif //OPT_USERP
+	
 
 	return 0;
 }

@@ -383,8 +383,16 @@ file      syscall/time_syscalls.c
 
 file      main/main.c
 file      main/menu.c
+
+## HELLO
 defoption hello
 optfile   hello   main/hello.c
+
+## THREADS
+defoption threads
+
+## USERP
+defoption userp
 
 ########################################
 #                                      #

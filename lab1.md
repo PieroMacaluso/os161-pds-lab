@@ -1,5 +1,49 @@
 # PdS 2019 - Laboratorio OS161 1
 
+
+# Review
+
+## Debugger
+
+```bash
+# One terminal with OS161 in debug mode
+cd ~/pds-os16/root
+sys161 -w kernel
+
+
+# One terminal with debugger
+cd ~/pds-os16/root
+ddd --debugger  mips-harvard-os161-gdb kernel
+```
+
+## Modificare il Kernel
+
+1. Creare in `kern/conf` il file `HELLO` e aggiungervi `option hello`;
+2. Creare file necessari in main
+3. Modificare `kern/conf/conf.kern` aggiungendo
+```
+defoption hello
+optfile   hello   main/hello.c
+```
+4. Eseguire in `kern/conf` il comando `./config HELLO`
+5. Recarsi in `kern/compile/HELLO`
+6. Fare in ordine
+
+```bash
+bmake depend
+bmake
+bmake install
+```
+
+## Concorrenza
+Autoseed presente in `sys161.conf`: usare per esecuzioni deterministiche.
+
+`thread_fork` chiama la `thread_create` che crea un thread vuoto, il quale viene riempito dalla prima. La `thread_yield` si occupa di "dare la precedenza" ad un altro thread, questa avviene a intervalli non deterministici.
+
+
+
+
+
 Il Sistema SIS161 – OS161 è installato in una macchina virtuale VBOX OSE, con S.O. Linux Ubuntu 14.04 (versione in inglese).
 
 Presso il LAIB1 sono disponibili macchine virtuali oVirt (Open Virtualization Manager) con Ubuntu 14.04 (versione in italiano)
