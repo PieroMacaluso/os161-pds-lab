@@ -62,5 +62,6 @@ int sys___time(userptr_t user_seconds, userptr_t user_nanoseconds);
 #ifdef OPT_SYSCALL
 int sys_write(int fd, userptr_t buf, size_t count);
 int sys_read(int fd, userptr_t buf, size_t count);
-#endif
+void sys__exit(int status);
+#endif /* OPT_SYSCALL */
 #endif /* _SYSCALL_H_ */

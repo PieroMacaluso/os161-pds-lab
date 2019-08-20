@@ -109,7 +109,11 @@ syscall(struct trapframe *tf)
 			retval = sys_read((int)tf->tf_a0,(userptr_t)tf->tf_a1,(size_t)tf->tf_a2);
 			if (retval < 0) err = ENOSYS;
 		break;
-	#endif
+		case SYS__exit:
+			/* TODO: just avoid crash */
+			sys__exit((int)tf->tf_a0);
+		break;
+	#endif /* OPT_SYSCALL */
 	    case SYS_reboot:
 			err = sys_reboot(tf->tf_a0);
 		break;
