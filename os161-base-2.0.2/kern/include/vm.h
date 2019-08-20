@@ -54,6 +54,10 @@ int vm_fault(int faulttype, vaddr_t faultaddress);
 /* Allocate/free kernel heap pages (called by kmalloc/kfree) */
 vaddr_t alloc_kpages(unsigned npages);
 void free_kpages(vaddr_t addr);
+#if OPT_VMADUE
+static paddr_t getfreeppages(unsigned long npages);
+static int freeppages(paddr_t addr, unsigned long pages);
+#endif /* OPT_VMADUE */
 
 /* TLB shootdown handling called from interprocessor_interrupt */
 void vm_tlbshootdown(const struct tlbshootdown *);

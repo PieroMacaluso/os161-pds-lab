@@ -38,6 +38,7 @@
 #include <mips/tlb.h>
 #include <addrspace.h>
 #include <vm.h>
+#include "opt-vmadue.h"
 
 /*
  * Dumb MIPS-only "VM system" that is intended to only be just barely
@@ -63,11 +64,50 @@
  * Wrap ram_stealmem in a spinlock.
  */
 static struct spinlock stealmem_lock = SPINLOCK_INITIALIZER;
+#if OPT_VMADUE
+static struct spinlock freemem_lock = SPINLOCK_INITIALIZER;
+
+
+static unsigned char *freeRamFrames = NULL;
+static unsigned long *allocSize = NULL;
+static int nRamFrames = 0;
+
+static int allocTableActive = 0;
+
+static int isTableActive() {
+	int active;
+	spinlock_acquire(&freemem_lock);
+	active = allocTableActive;
+	spinlock_release(&freemem_lock);
+	return active;
+}
+#endif /* OPT_VMADUE */
 
 void
 vm_bootstrap(void)
 {
 	/* Do nothing. */
+	#if OPT_VMADUE
+	int i;
+	nRamFrames = ((int)ram_getsize())/PAGE_SIZE;
+	/* alloc freeRamFrame and allocSize */
+	freeRamFrames = kmalloc(sizeof(unsigned char)* nRamFrames);
+	allocSize = kmalloc(sizeof(unsigned long)* nRamFrames);
+	if (freeRamFrames == NULL || allocSize == NULL) {
+		/*Reset and disable this management of VM */
+		freeRamFrames = NULL;
+		allocSize = NULL;
+		return;
+	}
+	for (i=0; i<nRamFrames; i++){
+		freeRamFrames[i] = (unsigned char) 0;
+		allocSize[i] = (unsigned long) 0;
+	}
+	spinlock_acquire(&freemem_lock);
+	/* Da questo punto in poi funziona tutto */
+	allocTableActive = 1;
+	spinlock_release(&freemem_lock);
+	#endif /* OPT_VMADUE */
 }
 
 /*
@@ -90,17 +130,78 @@ dumbvm_can_sleep(void)
 	}
 }
 
+
+#if OPT_VMADUE
+static paddr_t getfreeppages(unsigned long npages){
+	paddr_t addr;
+	long i, first, found, np = (long) npages;
+	if (!isTableActive()) return 0;
+	spinlock_acquire(&freemem_lock);
+
+	// Linear search of interval of free pages
+
+	for (i=0, first=found=-1; i<nRamFrames; i++) {
+		if (freeRamFrames[i]){
+			if (i==0 || !freeRamFrames[i-1]) first = i;
+			if (i-first+1 >= np) found = first;
+		}
+	}
+
+	if (found >= 0){
+		for (i=found; i<found+np; i++){
+			freeRamFrames[i] = (unsigned char)0;
+		}
+		allocSize[found] = np;
+		addr = (paddr_t) found*PAGE_SIZE;
+	} else {
+		addr = 0;
+	}
+	spinlock_release(&freemem_lock);
+	return addr;
+}
+
+static
+int
+freeppages(paddr_t addr, unsigned long pages){
+	long i, first, np= (long) pages;
+	if (freeRamFrames == NULL || nRamFrames <=0) return 0;
+	first = addr/PAGE_SIZE;
+	KASSERT(allocSize!=NULL);
+	KASSERT(nRamFrames> first);
+
+	spinlock_acquire(&freemem_lock);
+	for (i = first; i<first+np; i++){
+		freeRamFrames[i] = (unsigned char)1;
+	}
+	spinlock_release(&freemem_lock);	
+
+	return 1;
+}
+#endif /* OPT_VMADUE */
+
 static
 paddr_t
 getppages(unsigned long npages)
 {
 	paddr_t addr;
+	#if OPT_VMADUE
+	/* First try freed pages*/
+	addr = getfreeppages(npages);
+	if (addr != 0) return addr;
+	#endif /* OPT_VMADUE */
 
+	/* Otherwise steal mem*/
 	spinlock_acquire(&stealmem_lock);
-
 	addr = ram_stealmem(npages);
-
 	spinlock_release(&stealmem_lock);
+
+	#if OPT_VMADUE
+	if (isTableActive()){
+		spinlock_acquire(&freemem_lock);
+		allocSize[addr/PAGE_SIZE] = npages;
+		spinlock_release(&freemem_lock);
+	}
+	#endif /* OPT_VMADUE */
 	return addr;
 }
 
@@ -122,8 +223,16 @@ void
 free_kpages(vaddr_t addr)
 {
 	/* nothing - leak the memory. */
-
+	#if OPT_VMADUE
+	if (isTableActive()){
+		paddr_t paddr = addr - MIPS_KSEG0;
+		long first = paddr/PAGE_SIZE;
+		KASSERT(nRamFrames > first);
+		freeppages(paddr, allocSize[first]);
+	}
+	#else /* OPT_VMADUE */
 	(void)addr;
+	#endif
 }
 
 void
@@ -257,6 +366,11 @@ void
 as_destroy(struct addrspace *as)
 {
 	dumbvm_can_sleep();
+	#if OPT_VMADUE
+	freeppages(as->as_pbase1, as->as_npages1);
+	freeppages(as->as_pbase2, as->as_npages2);
+	freeppages(as->as_stackpbase, DUMBVM_STACKPAGES);
+	#endif /* OPT_VMADUE */
 	kfree(as);
 }
 

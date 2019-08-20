@@ -399,6 +399,9 @@ defoption syscall
 optfile   syscall   syscall/stdio_syscall.c
 optfile   syscall   syscall/proc_syscall.c
 
+## VMADUE
+defoption vmadue
+
 ########################################
 #                                      #
 #             Filesystems              #
