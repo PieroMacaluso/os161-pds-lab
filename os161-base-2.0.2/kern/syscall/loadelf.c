@@ -304,9 +304,9 @@ load_elf(struct vnode *v, vaddr_t *entrypoint)
 
 	*entrypoint = eh.e_entry;
 	#if OPT_USERP
-	kprintf("First segment: VADDR = %d, PADDR = %d, NPAGES = %d\n", as->as_vbase1, as->as_pbase1, as->as_npages1);
-	kprintf("Second segment: VADDR = %d, PADDR = %d, NPAGES = %d\n", as->as_vbase2, as->as_pbase2, as->as_npages2);
-	kprintf("Stack segment: PADDR = %d\n", as->as_stackpbase);
+	kprintf("First segment: VADDR = %d, PADDR = %d, NPAGES = %d, BYTES=%dB\n", as->as_vbase1, as->as_pbase1, as->as_npages1, as->as_npages1*PAGE_SIZE);
+	kprintf("Second segment: VADDR = %d, PADDR = %d, NPAGES = %d, BYTES=%dB\n\n", as->as_vbase2, as->as_pbase2, as->as_npages2, as->as_npages2*PAGE_SIZE);
+	kprintf("Stack segment: PADDR = %d, BYTES=%dB\n\n", as->as_stackpbase, PAGE_SIZE);
 	#endif //OPT_USERP
 	
 

@@ -100,8 +100,18 @@ syscall(struct trapframe *tf)
 	retval = 0;
 
 	switch (callno) {
+	#if OPT_SYSCALL
+		case SYS_write:
+			retval = sys_write((int)tf->tf_a0,(userptr_t)tf->tf_a1,(size_t)tf->tf_a2);
+			if (retval < 0) err = ENOSYS;
+		break;
+		case SYS_read:
+			retval = sys_read((int)tf->tf_a0,(userptr_t)tf->tf_a1,(size_t)tf->tf_a2);
+			if (retval < 0) err = ENOSYS;
+		break;
+	#endif
 	    case SYS_reboot:
-		err = sys_reboot(tf->tf_a0);
+			err = sys_reboot(tf->tf_a0);
 		break;
 
 	    case SYS___time:

@@ -394,6 +394,10 @@ defoption threads
 ## USERP
 defoption userp
 
+## SYSCALL
+defoption syscall
+optfile   syscall   syscall/stdio_syscall.c
+
 ########################################
 #                                      #
 #             Filesystems              #

@@ -32,6 +32,7 @@
 
 
 #include <cdefs.h> /* for __DEAD */
+#include "opt-syscall.h"
 struct trapframe; /* from <machine/trapframe.h> */
 
 /*
@@ -58,5 +59,8 @@ __DEAD void enter_new_process(int argc, userptr_t argv, userptr_t env,
 
 int sys_reboot(int code);
 int sys___time(userptr_t user_seconds, userptr_t user_nanoseconds);
-
+#ifdef OPT_SYSCALL
+int sys_write(int fd, userptr_t buf, size_t count);
+int sys_read(int fd, userptr_t buf, size_t count);
+#endif
 #endif /* _SYSCALL_H_ */
