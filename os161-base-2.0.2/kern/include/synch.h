@@ -37,6 +37,14 @@
 
 #include <spinlock.h>
 
+#include "opt-synch.h"
+
+
+/* 1: implement lock as a binary semaphore (+ pointer to thread) 
+ * 0: lock implemented by wait channel
+ */
+#define USE_SEMAPHORE_FOR_LOCK 1
+
 /*
  * Dijkstra-style semaphore.
  *

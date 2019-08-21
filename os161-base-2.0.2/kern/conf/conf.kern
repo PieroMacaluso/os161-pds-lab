@@ -405,6 +405,9 @@ defoption vmadue
 ## VMBIT
 defoption vmbit
 
+## SYNCH
+defoption synch
+
 ########################################
 #                                      #
 #             Filesystems              #
