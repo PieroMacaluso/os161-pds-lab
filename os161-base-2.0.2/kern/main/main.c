@@ -110,6 +110,9 @@ boot(void)
 
 	/* Early initialization. */
 	ram_bootstrap();
+	#if OPT_VMBIT
+	vm_bootstrap();
+	#endif
 	proc_bootstrap();
 	thread_bootstrap();
 	hardclock_bootstrap();
@@ -127,7 +130,9 @@ boot(void)
 	kheap_nextgeneration();
 
 	/* Late phase of initialization. */
+	#if !OPT_VMBIT
 	vm_bootstrap();
+	#endif
 	kprintf_bootstrap();
 	thread_start_cpus();
 

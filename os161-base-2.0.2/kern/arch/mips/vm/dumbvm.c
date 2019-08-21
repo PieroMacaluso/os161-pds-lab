@@ -38,8 +38,6 @@
 #include <mips/tlb.h>
 #include <addrspace.h>
 #include <vm.h>
-#include "opt-vmbit.h"
-#include "opt-vmadue.h"
 
 
 #define SetBit(A,k)     ( A[(k/32)] |= (1 << (k%32)) )     
@@ -67,6 +65,10 @@
 /* (this must be > 64K so argument blocks of size ARG_MAX will fit) */
 #define DUMBVM_STACKPAGES    18
 
+#if OPT_VMADUE
+static paddr_t getfreeppages(unsigned long npages);
+static int freeppages(paddr_t addr, unsigned long pages);
+#endif /* OPT_VMADUE */
 /*
  * Wrap ram_stealmem in a spinlock.
  */
@@ -81,6 +83,9 @@ static unsigned char *freeRamFrames = NULL;
 #endif
 static unsigned long *allocSize = NULL;
 static int nRamFrames = 0;
+static int firstPAddr = 0;
+static int occupiedBeforeTable = 0;
+static int lastPAddr = 0;
 
 static int allocTableActive = 0;
 
@@ -99,7 +104,11 @@ vm_bootstrap(void)
 	/* Do nothing. */
 	#if OPT_VMADUE
 	int i;
-	nRamFrames = ((int)ram_getsize())/PAGE_SIZE;
+	lastPAddr = (int)ram_getsize();
+	firstPAddr = (int)ram_getfirstfree();
+
+	nRamFrames = (lastPAddr)/PAGE_SIZE;
+	
 	/* alloc freeRamFrame and allocSize */
 	#if OPT_VMBIT
 	int bitRamFrames = nRamFrames / 32;
@@ -113,12 +122,18 @@ vm_bootstrap(void)
 		allocSize = NULL;
 		return;
 	}
-	for (i=0; i<bitRamFrames; i++){
-		freeRamFrames[i] = (unsigned int) 0;
-	}
-	for (i=0; i<nRamFrames; i++){
+	int pageBeforeTable = (firstPAddr + occupiedBeforeTable)/PAGE_SIZE;
+	for (i=0; i<pageBeforeTable; i++){
+		ClearBit(freeRamFrames, i);
 		allocSize[i] = (unsigned long) 0;
 	}
+	//allocSize[0] = pageBeforeTable;
+	freeppages(firstPAddr + occupiedBeforeTable, nRamFrames - pageBeforeTable);
+	/*for (i=pageBeforeTable; i<nRamFrames; i++){
+		SetBit(freeRamFrames, i);
+		allocSize[i] = (unsigned long) 0;
+	}
+	allocSize[pageBeforeTable] = nRamFrames - pageBeforeTable;*/
 	#else
 	freeRamFrames = kmalloc(sizeof(unsigned char)* nRamFrames);
 	allocSize = kmalloc(sizeof(unsigned long)* nRamFrames);
@@ -139,6 +154,24 @@ vm_bootstrap(void)
 	spinlock_release(&freemem_lock);
 	#endif /* OPT_VMADUE */
 }
+
+#if OPT_VMBIT
+int
+cmd_memstats(int nargs, char **args)
+{
+	(void)nargs;
+	(void)args;
+	int i;
+	for (i=0; i<nRamFrames; i++){
+		if (!(i%32)) kprintf("\n");
+		if (TestBit(freeRamFrames, i)) kprintf("1");
+		else kprintf("0");
+		kprintf("(%ld) ", allocSize[i]);
+	}
+	kprintf("\n");
+	return 0;
+}
+#endif
 
 /*
  * Check if we're in a context that can sleep. While most of the
@@ -234,12 +267,17 @@ getppages(unsigned long npages)
 	/* First try freed pages*/
 	addr = getfreeppages(npages);
 	if (addr != 0) return addr;
+	addr = firstPAddr + occupiedBeforeTable;
+	occupiedBeforeTable += npages*PAGE_SIZE;
+	(void)stealmem_lock;
 	#endif /* OPT_VMADUE */
 
+	#if !OPT_VMBIT
 	/* Otherwise steal mem*/
 	spinlock_acquire(&stealmem_lock);
 	addr = ram_stealmem(npages);
 	spinlock_release(&stealmem_lock);
+	#endif
 
 	#if OPT_VMADUE
 	if (isTableActive()){

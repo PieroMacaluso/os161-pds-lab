@@ -41,6 +41,7 @@
 #include <sfs.h>
 #include <syscall.h>
 #include <test.h>
+#include <vm.h>
 #include "opt-sfs.h"
 #include "opt-net.h"
 
@@ -556,6 +557,10 @@ static struct {
 	{ "kh",         cmd_kheapstats },
 	{ "khgen",      cmd_kheapgeneration },
 	{ "khdump",     cmd_kheapdump },
+	#if OPT_VMBIT
+	{ "memstats",	cmd_memstats },
+	#endif
+
 
 	/* base system tests */
 	{ "at",		arraytest },

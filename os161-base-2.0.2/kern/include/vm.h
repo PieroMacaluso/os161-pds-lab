@@ -30,6 +30,7 @@
 #ifndef _VM_H_
 #define _VM_H_
 
+
 /*
  * VM system-related definitions.
  *
@@ -37,6 +38,8 @@
  */
 
 
+#include "opt-vmbit.h"
+#include "opt-vmadue.h"
 #include <machine/vm.h>
 
 
@@ -55,10 +58,10 @@ int vm_fault(int faulttype, vaddr_t faultaddress);
 /* Allocate/free kernel heap pages (called by kmalloc/kfree) */
 vaddr_t alloc_kpages(unsigned npages);
 void free_kpages(vaddr_t addr);
-#if OPT_VMADUE
-static paddr_t getfreeppages(unsigned long npages);
-static int freeppages(paddr_t addr, unsigned long pages);
-#endif /* OPT_VMADUE */
+#if OPT_VMBIT
+int cmd_memstats(int nargs, char **args);
+#endif
+
 
 /* TLB shootdown handling called from interprocessor_interrupt */
 void vm_tlbshootdown(const struct tlbshootdown *);
