@@ -402,6 +402,9 @@ optfile   syscall   syscall/proc_syscall.c
 ## VMADUE
 defoption vmadue
 
+## VMBIT
+defoption vmbit
+
 ########################################
 #                                      #
 #             Filesystems              #

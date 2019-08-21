@@ -38,7 +38,14 @@
 #include <mips/tlb.h>
 #include <addrspace.h>
 #include <vm.h>
+#include "opt-vmbit.h"
 #include "opt-vmadue.h"
+
+
+#define SetBit(A,k)     ( A[(k/32)] |= (1 << (k%32)) )     
+#define ClearBit(A,k)   ( A[(k/32)] &= ~(1 << (k%32)) )
+#define TestBit(A,k)    ( A[(k/32)] & (1 << (k%32)) )    
+
 
 /*
  * Dumb MIPS-only "VM system" that is intended to only be just barely
@@ -67,8 +74,11 @@ static struct spinlock stealmem_lock = SPINLOCK_INITIALIZER;
 #if OPT_VMADUE
 static struct spinlock freemem_lock = SPINLOCK_INITIALIZER;
 
-
+#if OPT_VMBIT
+static unsigned int *freeRamFrames = NULL;
+#else
 static unsigned char *freeRamFrames = NULL;
+#endif
 static unsigned long *allocSize = NULL;
 static int nRamFrames = 0;
 
@@ -91,6 +101,25 @@ vm_bootstrap(void)
 	int i;
 	nRamFrames = ((int)ram_getsize())/PAGE_SIZE;
 	/* alloc freeRamFrame and allocSize */
+	#if OPT_VMBIT
+	int bitRamFrames = nRamFrames / 32;
+	int bitRamFramesSurplus = nRamFrames % 32;
+	if (bitRamFramesSurplus > 0) bitRamFrames++;
+	freeRamFrames = kmalloc(sizeof(int)* bitRamFrames);
+	allocSize = kmalloc(sizeof(unsigned long)* nRamFrames);
+	if (freeRamFrames == NULL || allocSize == NULL) {
+		/*Reset and disable this management of VM */
+		freeRamFrames = NULL;
+		allocSize = NULL;
+		return;
+	}
+	for (i=0; i<bitRamFrames; i++){
+		freeRamFrames[i] = (unsigned int) 0;
+	}
+	for (i=0; i<nRamFrames; i++){
+		allocSize[i] = (unsigned long) 0;
+	}
+	#else
 	freeRamFrames = kmalloc(sizeof(unsigned char)* nRamFrames);
 	allocSize = kmalloc(sizeof(unsigned long)* nRamFrames);
 	if (freeRamFrames == NULL || allocSize == NULL) {
@@ -103,6 +132,7 @@ vm_bootstrap(void)
 		freeRamFrames[i] = (unsigned char) 0;
 		allocSize[i] = (unsigned long) 0;
 	}
+	#endif
 	spinlock_acquire(&freemem_lock);
 	/* Da questo punto in poi funziona tutto */
 	allocTableActive = 1;
@@ -141,15 +171,27 @@ static paddr_t getfreeppages(unsigned long npages){
 	// Linear search of interval of free pages
 
 	for (i=0, first=found=-1; i<nRamFrames; i++) {
+		#if OPT_VMBIT
+		if (TestBit(freeRamFrames, i)){
+			if (i==0 || !TestBit(freeRamFrames, i-1)) first = i;
+			if (i-first+1 >= np) found = first;
+		}
+		#else
 		if (freeRamFrames[i]){
 			if (i==0 || !freeRamFrames[i-1]) first = i;
 			if (i-first+1 >= np) found = first;
 		}
+		#endif
+
 	}
 
 	if (found >= 0){
 		for (i=found; i<found+np; i++){
+		#if OPT_VMBIT
+			ClearBit(freeRamFrames, i);
+		#else
 			freeRamFrames[i] = (unsigned char)0;
+		#endif
 		}
 		allocSize[found] = np;
 		addr = (paddr_t) found*PAGE_SIZE;
@@ -171,7 +213,11 @@ freeppages(paddr_t addr, unsigned long pages){
 
 	spinlock_acquire(&freemem_lock);
 	for (i = first; i<first+np; i++){
+		#if OPT_VMBIT
+		SetBit(freeRamFrames, i);
+		#else
 		freeRamFrames[i] = (unsigned char)1;
+		#endif
 	}
 	spinlock_release(&freemem_lock);	
 
