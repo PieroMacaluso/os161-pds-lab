@@ -408,6 +408,9 @@ defoption vmbit
 ## SYNCH
 defoption synch
 
+## WAITPID
+defoption waitpid
+
 ########################################
 #                                      #
 #             Filesystems              #

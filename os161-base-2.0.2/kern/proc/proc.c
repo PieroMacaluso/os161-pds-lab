@@ -72,6 +72,20 @@ proc_create(const char *name)
 		kfree(proc);
 		return NULL;
 	}
+	#if OPT_WAITPID
+	proc->p_cv = cv_create(proc->p_name);
+	if (proc->p_cv == NULL) {
+		kfree(proc);
+		return NULL;
+	}
+	proc->p_lockl = lock_create(proc->p_name);
+	if (proc->p_lockl == NULL) {
+		cv_destroy(proc->p_cv);
+		kfree(proc->p_name);
+		kfree(proc);
+		return NULL;
+	}
+	#endif
 
 	proc->p_numthreads = 0;
 	spinlock_init(&proc->p_lock);
@@ -167,6 +181,10 @@ proc_destroy(struct proc *proc)
 
 	KASSERT(proc->p_numthreads == 0);
 	spinlock_cleanup(&proc->p_lock);
+	#if OPT_WAITPID
+	cv_destroy(proc->p_cv);
+	lock_destroy(proc->p_lockl);
+	#endif
 
 	kfree(proc->p_name);
 	kfree(proc);
@@ -318,3 +336,19 @@ proc_setas(struct addrspace *newas)
 	spinlock_release(&proc->p_lock);
 	return oldas;
 }
+
+ int proc_wait(struct proc *proc) {
+	#if OPT_WAITPID
+	int return_status;
+	/* NULL and kernel proc forbidden */
+	KASSERT(proc != NULL);
+	KASSERT(proc != kproc);
+
+	lock_acquire(proc->p_lockl);
+    cv_wait(proc->p_cv, proc->p_lockl);
+    lock_release(proc->p_lockl);
+	return_status = proc->p_status;
+    proc_destroy(proc);
+    return return_status;
+ 	#endif /* OPT_WAITPID */
+ }
