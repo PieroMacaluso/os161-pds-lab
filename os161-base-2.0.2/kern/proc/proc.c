@@ -75,6 +75,7 @@ proc_create(const char *name)
 	#if OPT_WAITPID
 	proc->p_cv = cv_create(proc->p_name);
 	if (proc->p_cv == NULL) {
+		kfree(proc->p_name);
 		kfree(proc);
 		return NULL;
 	}

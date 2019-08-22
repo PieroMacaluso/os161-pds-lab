@@ -33,4 +33,5 @@ options dumbvm			# Chewing gum and baling wire.
 options syscall
 options vmadue
 options vmbit
+options synch
 options waitpid
