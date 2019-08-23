@@ -39,7 +39,8 @@
 #include <spinlock.h>
 #include "opt-waitpid.h"
 #if OPT_WAITPID
-	#include <synch.h>
+#include <synch.h>
+#include <types.h>
 #endif
 
 struct addrspace;
@@ -79,6 +80,7 @@ struct proc {
 	struct cv * p_cv;
 	struct lock *p_lockl;
 	int p_status;
+	pid_t p_pid;
 	#endif
 };
 
@@ -108,6 +110,7 @@ struct addrspace *proc_setas(struct addrspace *);
 
 #if OPT_WAITPID
 int proc_wait(struct proc *p);
+struct proc * proc_search_pid(pid_t pid);
 #endif /* OPT_WAITPID */
 
 

@@ -35,3 +35,4 @@ options vmadue
 options vmbit
 options synch
 options waitpid
+options fork

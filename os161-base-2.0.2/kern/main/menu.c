@@ -139,7 +139,9 @@ common_prog(int nargs, char **args)
 	 * once you write the code for handling that.
 	 */
 	#if OPT_WAITPID
-	int exit_code = proc_wait(proc);
+	int exit_code = 0;
+	sys_waitpid(proc->p_pid, (userptr_t) exit_code, 0);
+	// int exit_code = proc_wait(proc);
 	kprintf("Returned Code: %d\n", exit_code);
 	#endif /* OPT_WAITPID */
 

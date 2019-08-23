@@ -411,6 +411,10 @@ defoption synch
 ## WAITPID
 defoption waitpid
 
+## FORK
+# defoption fork
+
+
 ########################################
 #                                      #
 #             Filesystems              #
