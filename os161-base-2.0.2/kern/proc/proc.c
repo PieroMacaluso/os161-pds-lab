@@ -48,6 +48,7 @@
 #include <current.h>
 #include <addrspace.h>
 #include <vnode.h>
+#include "opt-vfs.h"
 
 
 #if OPT_WAITPID
@@ -163,6 +164,10 @@ proc_create(const char *name)
 	proc->p_cwd = NULL;
 
 	proc_init_waitpid(proc,name);
+
+	#if OPT_VFS
+        bzero(proc->fileTable,OPEN_MAX*sizeof(struct openfile *));
+	#endif
 
 	return proc;
 }
@@ -426,3 +431,18 @@ proc_setas(struct addrspace *newas)
     return return_status;
  	#endif /* OPT_WAITPID */
  }
+
+#if OPT_VFS
+void 
+proc_file_table_copy(struct proc *psrc, struct proc *pdest) {
+  int fd;
+  for (fd=0; fd<OPEN_MAX; fd++) {
+    struct openfile *of = psrc->fileTable[fd];
+    pdest->fileTable[fd] = of;
+    if (of != NULL) {
+      /* incr reference count */
+      openfileIncrRefCount(of);
+    }
+  }
+}
+#endif

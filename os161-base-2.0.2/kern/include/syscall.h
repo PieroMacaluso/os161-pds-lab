@@ -35,6 +35,7 @@
 #include "opt-syscall.h"
 #include "opt-waitpid.h"
 #include "opt-fork.h"
+#include "opt-vfs.h"
 
 struct trapframe; /* from <machine/trapframe.h> */
 
@@ -63,6 +64,12 @@ __DEAD void enter_new_process(int argc, userptr_t argv, userptr_t env,
 int sys_reboot(int code);
 int sys___time(userptr_t user_seconds, userptr_t user_nanoseconds);
 #ifdef OPT_SYSCALL
+#if OPT_VFS
+struct openfile;
+void openfileIncrRefCount(struct openfile *of);
+int sys_open(userptr_t pathname ,int flags, mode_t mode, int * err_value);
+int sys_close(int fd);
+#endif /* OPT_VFS */
 int sys_write(int fd, userptr_t buf, size_t count);
 int sys_read(int fd, userptr_t buf, size_t count);
 void sys__exit(int status);

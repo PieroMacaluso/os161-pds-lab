@@ -39,6 +39,7 @@
 #include "opt-syscall.h"
 #include "opt-waitpid.h"
 #include "opt-fork.h"
+#include "opt-vfs.h"
 
 
 /*
@@ -105,6 +106,20 @@ syscall(struct trapframe *tf)
 
 	switch (callno) {
 	#if OPT_SYSCALL
+	#if OPT_VFS
+		case SYS_open:
+			retval = sys_open((userptr_t)tf->tf_a0,(int)tf->tf_a1,(mode_t)tf->tf_a2, &err);
+		break;
+		case SYS_close:
+	        retval = sys_close((int)tf->tf_a0);
+            if (retval<0) err = ENOENT; 
+			else err = 0;
+        break;
+		case SYS_remove:
+	      /* just ignore: do nothing */
+	        retval = 0;
+                break;
+	#endif /* OPT_WAITPID */
 		case SYS_write:
 			retval = sys_write((int)tf->tf_a0,(userptr_t)tf->tf_a1,(size_t)tf->tf_a2);
 			if (retval < 0) err = ENOSYS;
@@ -117,7 +132,7 @@ syscall(struct trapframe *tf)
 			/* TODO: just avoid crash */
 			sys__exit((int)tf->tf_a0);
 		break;
-		#if OPT_WAITPID
+	#if OPT_WAITPID
 		case SYS_waitpid:
 			retval = sys_waitpid((pid_t)tf->tf_a0,(userptr_t)tf->tf_a1,(int)tf->tf_a2);
 			if (retval < 0) err = ENOSYS;
@@ -131,8 +146,8 @@ syscall(struct trapframe *tf)
 	    case SYS_fork:
 	        err = sys_fork(tf,&retval);
                 break;
-#endif
-		#endif
+	#endif /* OPT_FORK */
+	#endif /* OPT_WAITPID */
 	#endif /* OPT_SYSCALL */
 	    case SYS_reboot:
 			err = sys_reboot(tf->tf_a0);
@@ -191,9 +206,11 @@ syscall(struct trapframe *tf)
 void
 enter_forked_process(struct trapframe *tf)
 {
-	#if OPT_FORK
+#if OPT_FORK
 	// Duplicate frame so it's on stack
 	struct trapframe forkedTf = *tf; // copy trap frame onto kernel stack
+
+	kfree(tf); /* work done. now can be freed */
 
 	forkedTf.tf_v0 = 0; // return value is 0
         forkedTf.tf_a3 = 0; // return with success

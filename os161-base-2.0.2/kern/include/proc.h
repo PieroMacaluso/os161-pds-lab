@@ -37,7 +37,10 @@
  */
 
 #include <spinlock.h>
+#include <limits.h>
+#include <syscall.h>
 #include "opt-waitpid.h"
+#include "opt-vfs.h"
 #if OPT_WAITPID
 #include <synch.h>
 #include <types.h>
@@ -82,6 +85,9 @@ struct proc {
 	int p_status;
 	pid_t p_pid;
 	#endif
+	#if OPT_VFS
+        struct openfile *fileTable[OPEN_MAX];
+	#endif	
 };
 
 /* This is the process structure for the kernel and for kernel-only threads. */
@@ -112,6 +118,10 @@ struct addrspace *proc_setas(struct addrspace *);
 int proc_wait(struct proc *p);
 struct proc * proc_search_pid(pid_t pid);
 #endif /* OPT_WAITPID */
+
+#if OPT_VFS
+void proc_file_table_copy(struct proc *psrc, struct proc *pdest);
+#endif
 
 
 #endif /* _PROC_H_ */

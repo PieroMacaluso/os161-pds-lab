@@ -412,7 +412,10 @@ defoption synch
 defoption waitpid
 
 ## FORK
-# defoption fork
+defoption fork
+
+## VFS
+defoption vfs
 
 
 ########################################
